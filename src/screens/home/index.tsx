@@ -1,5 +1,5 @@
 import React, {useState,useEffect,useRef} from "react";
-import { Image ,View, Text, SafeAreaView, TouchableOpacity, FlatList} from "react-native";
+import { Image ,View, Text, SafeAreaView, TouchableOpacity, TextInput} from "react-native";
 import { getBottomSpace, getStatusBarHeight } from 'react-native-iphone-x-helper';
 
 
@@ -19,53 +19,108 @@ import { EvilIcons } from '@expo/vector-icons';
 import { Header } from "../../componentes/header";
 import { Modalize } from 'react-native-modalize';
 import { Portal } from 'react-native-portalize';
-import { Busca } from "../../services/busca";
 
 //DB
 import { signos } from "../../db";
 
 //Api
-import { api } from "../../services/api";
-import axios from 'axios';
+
+import { getAll } from "../../services/horoscope";
 
 
 export function Home(){
-    
-    const [filtro, setFiltro] = useState('');
-    
-
-
-      //console.log(horoscopo);
 
     const [color, setColor] = useState('');
     const [title, setTitle] = useState('');
     const [UriImage, setUriImage] = useState('');
-    const [date, setDate] = useState('08/06/2021');
-    const [subtitle, setSubtitle] = useState('Melhore sua capacidade de expressar talentos, habilidades e perceber o que pode ser reciclado ou modificado.');
+    
+    const [subtitle, setSubtitle] = useState(null);
 
+    const [dados, setDados]= useState([]);
     const modalizeRef = useRef<Modalize>(null);
 
-    const [openSignoModal, setOpenSignoModal] = useState(false);
+    // Data
+    const mes = new Date().getMonth()+1;
+    const dia = new Date().getDay()-3;
+    const ano = new Date().getFullYear();
+
+    const [mesFormat, setMesFormat] = useState('');
+    const [diaFormat, setDiaFormat] = useState('');
+    
+    const [date, setDate] = useState('');
+    const [dateModal, setDateModal] = useState('');
+
+
+    useEffect(()=>{
+        if(mes < 10){
+            setMesFormat(`0${mes}`)
+        }else{
+            setMesFormat(`${mes}`)
+        }
+        if(dia < 10){
+            setDiaFormat(`0${dia}`)
+        }else{
+            setDiaFormat(`${dia}`)
+        }
+        consulta();
+    },[])
+    useEffect(()=>{
+        setDate(`${ano}-${mesFormat}-${diaFormat}`);
+        setDateModal(`${diaFormat}-${mesFormat}-${ano}`);
+    },[diaFormat])
+    useEffect(()=>{
+        onOpen();
+    },[title])
+
+    const consulta = async () => {
+        // faz a requisição pra api
+        const response = await getAll();
+        //crio uma variavel só pra receber os dados
+        const data = response.data.result;
+        setDados(data)
+    }
+
     const onOpen = () => {
-        modalizeRef.current?.open();
+        if(subtitle !== ''){
+
+            // crio uma outra variavel que vai receber os dados do signo
+            let details;
+
+            /*
+            troquei de map para forEach pois o forEach nao retorna um array
+            ele apenas ira percorrer o array
+            */
+
+            dados.map(item => {
+                
+                // verificação da data. Usando o new Date nunca entrava na condição
+                if (date === item.dt) {
+                    setDate(item.dt)
+                    //faço details receber o objeto com as informações de descrição, signo e titulo
+                    var details = item.horoscopes.filter(item => {
+                        if(item.sign === title){
+                            setSubtitle(item.description)
+                            modalizeRef.current?.open();
+                        } 
+                    }).shift()
+                }
+            });
+        }else{
+        
+        }
     };
+
     const onClosed = () => {
+        //setSubtitle(null);
         modalizeRef.current?.close();
     };
 
-    function openSigno(){
-        if(openSignoModal === false){
-            setOpenSignoModal(true);
-        }else{
-            setOpenSignoModal(false);
-        }
-    }
     return(
         <SafeAreaView style={styles.container}>
             <Header 
             title="Horóscopo"
             />
-            
+
             <Text style={styles.textTop}>Escolha um signo e descubra o horóscopo do dia!</Text>
             
             
@@ -80,9 +135,9 @@ export function Home(){
                         setColor(item.corBg);
                         setTitle(item.signo);
                         setUriImage(item.uriImg);
+                        
 
                         onOpen();
-                        //openSigno();
                       }
                     return(
                         <View style={styles.content}>
@@ -113,7 +168,7 @@ export function Home(){
                         <Image style={styles.imgModal} resizeMode={'contain'} source={{uri: UriImage}}/>
                             
                         <Text style={styles.titleModal}>{title}</Text>
-                        <Text style={styles.dateModal}>{date}</Text>
+                        <Text style={styles.dateModal}>{dateModal}</Text>
                         <Text style={styles.subtitleModal}>{subtitle}</Text>
                         <Image style={styles.arteModal} resizeMode={'contain'} source={require('../../assets/modal/arte.png')}/>
                             

@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
     },
     containerModal:{
         flex: 1,
-        marginTop: 100,
+        marginTop: 40,
         marginBottom:10,
         marginHorizontal:10,
         borderBottomRightRadius:40,
@@ -80,9 +80,9 @@ export const styles = StyleSheet.create({
     },
     subtitleModal:{
         textAlign:'center',
-        fontSize:18,
+        fontSize:15,
         top:200,
-        marginHorizontal:50,
+        marginHorizontal:40,
     },
     arteModal:{
         position: 'absolute',
